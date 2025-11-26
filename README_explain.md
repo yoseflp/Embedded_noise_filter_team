@@ -55,7 +55,9 @@ python3 pi_xxxxxxxx.py
 
 # 필터
 
-## RNNoise
+## RNNoise(Deep Learning base filter) : 효과 말도 안됨
+정리필요..
+
 
 ## HPF(하이패스 필터) : 생각보다 효과가 미미함
 저주파를 억제하고 높은 주파수는 통과시키는 역할
