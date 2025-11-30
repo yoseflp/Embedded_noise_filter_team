@@ -7,24 +7,26 @@
  차후에 Pi_A에 filter를 넣어줄 예정
 
 ## 1. 기본 준비
-
+```bash
 sudo apt update
 sudo apt upgrade -y
 sudo apt install -y git python3 python3-venv python3-pip
-
+```
 ### 가상환경 
-python3 -m venv audioenv
+`python3 -m venv audioenv`
 
 ### pip
-pip install --upgrade pip
+`pip install --upgrade pip`
 
 # 패키지 설치
-pip install -r requirements.txt
+`pip install -r requirements.txt`
 
 ## 2. 수신단 
+```bash
 sudo apt install -y libportaudio2 libportaudio-dev alsa-utils
-
+```
 ## 3. 필터 있는 Pi
+```bash
 sudo apt install -y autoconf automake libtool pkg -config build-essential
 
 cd ~
@@ -36,30 +38,32 @@ make
 sudo make install
 
 sudo ldconfig
-
+```
 ## 4. IP 주소 확인 (차후에 다른 네트워크에서 가능한지 확인 필요, 공인 Ip 확인 필요)
-hostname -I
+`hostname -I`
 
 ## 5. 실행
 
 ### Pi_B
+```bash
 source audioenv/bin/activate
 python3 pi_XXXXXXX.py
-
+```
 #### 필터 설정
-0=RAW, 1=HPF, 2=RNN, 3=BOTH
+`0`=RAW, `1`=HPF, `2`=RNN, `3`=BOTH
 
 ### Pi_A
+```bash
 source audioenv/bin/activate
 python3 pi_xxxxxxxx.py
-
+```
 # 필터
 
 ## RNNoise(Deep Learning base filter) : 효과 말도 안됨
 정리필요..
 
 
-## HPF(하이패스 필터) : 생각보다 효과가 미미함
+## HPF(High Pass Filter) : 생각보다 효과가 미미함
 저주파를 억제하고 높은 주파수는 통과시키는 역할
 사람 말소리는 100~4kHz 사이
 코드에서 fc는 하이패스 컷오프 주파수 이거 밑에 값은 필터링함
