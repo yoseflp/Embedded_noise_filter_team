@@ -1,8 +1,9 @@
-# > **2025-2 Embedded System Design Project** > **Team:** Noise_Filter_Team  
+# **2025-2 Embedded System Design Project** 
+> **Team:** Noise_Filter_Team(Silentium Factorem)
 > **Period:** 2025.11.26 ~ 2025.12.22
 
 ---
-# 🔊 Distributed Real-Time Voice Noise Filtering System (실시간 음성 노이즈 제거 임베디드 시스템)
+## 🔊 Distributed Real-Time Voice Noise Filtering System (실시간 음성 노이즈 제거 임베디드 시스템)
 
 
 ---
@@ -112,53 +113,65 @@ graph LR
 
 ```mermaid
 graph TD
+    %% 스타일 정의
     classDef cpu fill:#e1f5fe,stroke:#01579b,stroke-width:2px;
     classDef bus fill:#fff9c4,stroke:#fbc02d,stroke-width:1px;
-    classDef net fill:#e8eaf6,stroke:#3f51b5,stroke-width:2px,stroke-dasharray: 5 5;
 
-    subgraph Sender_Unit [Edge Device A (송신부)]
+    subgraph Sender_Unit ["<b>Edge Device A</b> <br>(송신부: 연산/필터링)"]
         CPU_A["<b>Raspberry Pi 4 CPU</b><br>DSP (HPF/RNNoise)"]:::cpu
+        
         USB_Port[USB Interface]:::bus
         GPIO_A[GPIO Interface]:::bus
-        Net_A[Network Interface]:::bus
         
-        Mic_HW[USB 고감도 마이크]
-        SR04_A["HC-SR04 초음파 센서<br>(Trig/Echo)"]
-        Keypad_HW["1x4 Membrane Keypad<br>(Mode Control)"]
+        Mic_HW["USB Mike <br>(●Voice IN)"]
+        SR04_A["<b>[INPUT]</b> <br>Sonar sensor<br>(Auto Wake-up)"]
+        Keypad_HW["<b>[INPUT]</b> <br>1x3 Push Button<br>(Mode Control)"]
+
         
-        CPU_A --- USB_Port & GPIO_A & Net_A
+        CPU_A --- USB_Port
+        CPU_A --- GPIO_A
+        
         USB_Port --- Mic_HW
-        GPIO_A --- SR04_A & Keypad_HW
+        GPIO_A --- SR04_A
+        GPIO_A --- Keypad_HW
     end
 
-    Link["<b>Network Interface</b><br>Wi-Fi (802.11ac) / Ethernet (802.3)<br>TCP/IP Socket Stream"]:::net
+    Link["<b>Ethernet / Wi-Fi</b><br>TCP/IP Socket Stream"]
 
-    subgraph Receiver_Unit [Edge Device B (수신부)]
+    subgraph Receiver_Unit ["<b>Edge Device B</b> <br>(수신부: 출력/UI)"]
         CPU_B["<b>Raspberry Pi 4 CPU</b><br>UI / Audio Output"]:::cpu
+        
         I2C_Bus["I2C Bus<br>(SDA/SCL)"]:::bus
         I2S_Bus["I2S Audio Bus<br>(BCLK/LRC/DIN)"]:::bus
         GPIO_B[General GPIO]:::bus
-        Net_B[Network Interface]:::bus
         
-        OLED_HW[SSD1306 OLED]
-        Amp_HW[MAX98357A Amp + 3W Speaker]
-        Touch_HW["TTP223 Touch Sensor<br>(Mute Toggle)"]
-        Neo_HW[NeoPixel Stick 8]
+        OLED_HW["<b>[OUTPUT]</b> <br>OLED Display <br>(Status/Mode/IP)"]
+        Amp_HW["<b>[OUTPUT]</b> <br> Audio Amp <br>+ 3W Speaker <br>(●Voice OUT)"]
         
-        CPU_B --- I2C_Bus & I2S_Bus & GPIO_B & Net_B
+        Touch_HW["<b>[INPUT]</b> <br>Capacitive Touch Sensor<br>(Mute Toggle)"]
+        Neo_HW["<b>[OUTPUT]</b> <br>NeoPixel Stick 8 <br>(VU Meter)"]
+        
+        CPU_B --- I2C_Bus
+        CPU_B --- I2S_Bus
+        CPU_B --- GPIO_B
+        
         I2C_Bus --- OLED_HW
         I2S_Bus --- Amp_HW
-        GPIO_B --- Touch_HW & Neo_HW
+        
+        GPIO_B --- Touch_HW
+        GPIO_B --- Neo_HW
     end
 
-    Net_A <==> Link <==> Net_B
+    Sender_Unit <==> Link <==> Receiver_Unit
 ```
 
 ### 3. 시스템 플로우차트 (Software Flowchart)
 데이터 처리 및 제어 로직의 흐름입니다.
 
+
 ```mermaid
 flowchart TD
+    %% --- 스타일 정의 ---
     classDef start fill:#333,stroke:#333,stroke-width:2px,color:white,rx:10,ry:10;
     classDef proc fill:#fff,stroke:#333,stroke-width:1px;
     classDef decision fill:#fff9c4,stroke:#fbc02d,stroke-width:2px;
@@ -166,54 +179,66 @@ flowchart TD
     classDef receiver fill:#e8f5e9,stroke:#4caf50,stroke-width:2px;
     classDef filter fill:#d1c4e9,stroke:#673ab7,stroke-width:2px;
 
+    %% --- 시작점 ---
     Root((System Start)):::start --> Init["가상환경 및 라이브러리 로드"]:::proc
-    Init --> Fork_A & Fork_B
+    Init --> Fork_A
+    Init --> Fork_B
 
+    %% --- [Pi A] 송신부 ---
     subgraph Sender_Logic [Pi_A : 감지, 필터링, 송신]
         direction TB
         Fork_A(Sender Start):::start
+        
         Fork_A --> Check_User{"사용자 감지?<br>(초음파 센서)"}:::decision
         
+        %% 분기: 사용자 없음
         Check_User -- No --> Packet_Cut["<b>[보안] 전송 차단</b><br>Packet Cut-off"]:::sender
         Packet_Cut --> Check_User
         
+        %% 분기: 사용자 있음
         Check_User -- Yes --> Read_Mic["마이크 입력<br>(Raw PCM)"]:::sender
         Read_Mic --> Check_Mode{"필터 모드 확인<br>(Keypad 입력)"}:::decision
         
-        Filter_Raw["<b>Bypass</b><br>원본 유지"]:::proc ~~~ Filter_HPF["<b>HPF</b><br>저주파 억제"]:::filter ~~~ Filter_RNN["<b>RNNoise</b><br>Deep Learning"]:::filter ~~~ Filter_Both["<b>Hybrid</b><br>HPF + RNNoise"]:::filter
-
-        Check_Mode -- 0: RAW --> Filter_Raw
-        Check_Mode -- 1: HPF --> Filter_HPF
-        Check_Mode -- 2: RNN --> Filter_RNN
-        Check_Mode -- 3: BOTH --> Filter_Both
+        %% 필터 모드 분기 (자연스러운 배치)
+        Check_Mode -- 0 --> Filter_Raw["<b>Bypass</b><br>원본 유지"]:::proc
+        Check_Mode -- 1 --> Filter_HPF["<b>HPF</b><br>저주파 억제"]:::filter
+        Check_Mode -- 2 --> Filter_RNN["<b>RNNoise</b><br>Deep Learning"]:::filter
+        Check_Mode -- 3 --> Filter_Both["<b>Hybrid</b><br>HPF + RNNoise"]:::filter
         
-        Filter_Raw --> Process_Data
+        %% 필터 합류
+        Filter_Raw --> Process_Data["오디오 합성 & RMS 계산"]:::sender
         Filter_HPF --> Process_Data
         Filter_RNN --> Process_Data
         Filter_Both --> Process_Data
         
-        Process_Data["오디오 합성 & RMS 계산"]:::sender --> Make_Pkt["패킷 생성<br>[Header: RMS] + [Body: Audio]"]:::sender
+        Process_Data --> Make_Pkt["패킷 생성 <br>[Header:RMS] + [Body: Audio]"]:::sender
         Make_Pkt --> Send_Pkt["소켓 패킷 전송"]:::sender
+        
+        %% 루프백
         Send_Pkt --> Check_User
     end
 
-    Send_Pkt -.->|Processed Stream| Recv_Pkt
+    %% --- 네트워크 연결 ---
+    Send_Pkt -.->|Stream| Recv_Pkt
 
+    %% --- [Pi B] 수신부 ---
     subgraph Receiver_Logic [Pi_B : 재생 및 시각화]
         direction TB
         Fork_B(Receiver Start):::start
+        
         Fork_B --> Recv_Pkt["패킷 수신 & 파싱"]:::receiver
         Recv_Pkt --> Check_Mute{"Mute 상태?<br>(터치 센서)"}:::decision
         
-        Check_Mute -- Yes --> Stop_Out["출력 중단 (Zero Write)<br>& LED 적색 점등"]:::receiver
-        Stop_Out --> Recv_Pkt
+        %% Mute 분기
+        Check_Mute -- Yes --> Stop_Sound["출력 중단 (Zero Write)<br>& LED 적색 점등"]:::receiver
+        Stop_Sound --> Recv_Pkt
         
+        %% 정상 출력 분기
         Check_Mute -- No --> Output_Spk["I2S 앰프 스피커 출력"]:::receiver
-        Output_Spk --> Update_Visual["<b>NeoPixel VU Meter</b><br>소리 크기 시각화<br><b>OLED 디스플레이</b><br>모드 정보 갱신"]:::receiver
+        Output_Spk --> Update_Visual["<b>- NeoPixel VU Meter</b> <br>(소리 크기 시각화)<br><b>- OLED 디스플레이</b> <br>(상태/모드 정보 갱신)"]:::receiver
+        
         Update_Visual --> Recv_Pkt
     end
-    
-    Sender_Logic ~~~ Receiver_Logic
 
 ```
 
