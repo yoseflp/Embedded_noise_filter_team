@@ -1,12 +1,10 @@
 # System
+
 ---
+
 ## Concept Diagram
 
-```mermaid　
----
-config:
-  layout: fixed
----
+```mermaid
 flowchart LR
  subgraph User_Side["사용자 환경"]
         User(("사용자"))
