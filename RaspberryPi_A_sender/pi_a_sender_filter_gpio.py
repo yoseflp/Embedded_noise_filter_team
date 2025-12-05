@@ -77,7 +77,7 @@ HPF_ORDER = 2
 hpf_list = [HighPassFilter(fs=SAMPLE_RATE, fc=HPF_FC) for _ in range(HPF_ORDER)]
 # =====================
 
-# RNNoise 인스턴스 (우리 래퍼, 480샘플 고정)
+# RNNoise 인스턴스 
 denoiser = RNNoise()
 
 # ===== GPIO 핀 매핑 (BCM 번호) =====
@@ -86,10 +86,10 @@ BTN_PINS = [17, 27, 22, 5]   # 물리핀: 11, 13, 15, 29
 
 # 초음파 센서 HC-SR04
 TRIG_PIN = 23                # 물리핀 16
-ECHO_PIN = 24                # 물리핀 18  (반드시 저항분배 등으로 3.3V로 낮출 것)
+ECHO_PIN = 24                # 물리핀 18  
 
-PERSON_THRESHOLD_CM = 80.0   # 이 거리보다 가까우면 "사람 있음"
-ULTRA_INTERVAL = 0.2         # 거리 측정 주기(초)
+PERSON_THRESHOLD_CM = 80.0   
+ULTRA_INTERVAL = 0.2         
 # ===============================
 
 person_present = False
