@@ -3,6 +3,8 @@
 
 > **Period:** 2025.11.26 ~ 2025.12.22
 
+> **Presentation:** [Canva Slides](https://www.canva.com/design/DAG6DtFDdC8/tsdAm2fYic_QHaUobkB2QQ/edit?utm_content=DAG6DtFDdC8&utm_campaign=designshare&utm_medium=link2&utm_source=sharebutton)
+
 ---
 ## 🔊 Distributed Real-Time Voice Noise Filtering System (실시간 음성 노이즈 제거 임베디드 시스템)
 
